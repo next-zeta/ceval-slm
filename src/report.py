@@ -56,7 +56,7 @@ def render(rows: List[Dict[str, Any]]) -> str:
         change = "{}/{}/{}/{}".format(
             r.get("template", "?"),
             r.get("fewshot_k", 0),
-            r.get("n_samples", 1),
+            r.get("generations_per_question", 1),
             r.get("batch_size", 1),
         )
         lines.append("| `{}` | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |".format(

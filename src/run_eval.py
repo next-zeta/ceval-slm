@@ -428,7 +428,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         "template": cfg["template"],
         "template_sha1": template_signature(cfg["template"]),
         "fewshot_k": int(cfg["fewshot_k"]),
-        "n_samples": n_samples,
+        "generations_per_question": n_samples,
         "do_sample": bool(cfg["do_sample"]) or n_samples > 1,
         "temperature": float(cfg["temperature"]),
         "top_p": float(cfg["top_p"]),
