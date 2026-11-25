@@ -32,7 +32,6 @@ import hashlib
 import json
 import platform
 import random
-import subprocess
 import sys
 import time
 from collections import Counter
@@ -44,11 +43,13 @@ try:  # 作为包导入时（python -m src.run_eval）
     from .extract import extract_answer, format_valid
     from .metrics import build_summary, write_json
     from .prompts import TEMPLATE_NAMES, build_prompt, template_signature
+    from .provenance import git_revision
 except ImportError:  # 作为脚本运行时（python src/run_eval.py）
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from extract import extract_answer, format_valid
     from metrics import build_summary, write_json
     from prompts import TEMPLATE_NAMES, build_prompt, template_signature
+    from provenance import git_revision
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -124,20 +125,6 @@ def _rel(path: str) -> Path:
 
 def _file_md5(path: Path) -> str:
     return hashlib.md5(path.read_bytes()).hexdigest()
-
-
-def git_revision() -> str:
-    try:
-        out = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=str(ROOT),
-                             capture_output=True, text=True, timeout=10)
-        if out.returncode == 0 and out.stdout.strip():
-            dirty = subprocess.run(["git", "status", "--porcelain"], cwd=str(ROOT),
-                                   capture_output=True, text=True, timeout=10)
-            suffix = "-dirty" if dirty.stdout.strip() else ""
-            return out.stdout.strip() + suffix
-    except Exception:  # noqa: BLE001
-        pass
-    return "unknown"
 
 
 def resolve_device(spec: str, torch) -> "torch.device":

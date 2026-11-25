@@ -44,6 +44,7 @@ ceval-slm/
 │   ├── prompts.py             ← 提示模板（冻结）
 │   ├── extract.py             ← 答案抽取（冻结，成员 C 校验）
 │   ├── metrics.py             ← 指标计算
+│   ├── provenance.py          ← commit / 环境可追溯（git 不在 PATH 时的回退）
 │   └── report.py              ← 总表生成
 ├── tests/test_extract.py
 ├── logs/<exp_id>/{<exp_id>.jsonl, summary.json}   ← 正式实验证据，全部入库

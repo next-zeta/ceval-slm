@@ -31,11 +31,16 @@ import hashlib
 import json
 import platform
 import random
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Sequence, Tuple
+
+try:  # 作为包导入时
+    from .provenance import git_revision
+except ImportError:  # 作为脚本运行（python src/prepare_data.py）
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from provenance import git_revision
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT_DIR = ROOT / "data"
@@ -195,6 +200,19 @@ def sample_subset(
 # --------------------------------------------------------------------------- #
 # 防泄露与完整性自检
 # --------------------------------------------------------------------------- #
+def find_duplicate_groups(subset: Sequence[Mapping[str, Any]]) -> Dict[Tuple[str, str], List[Mapping[str, Any]]]:
+    """找出题干完全相同的题组。
+
+    C-Eval 里存在"同题干、同选项、答案却不同"的标注矛盾（例如 college_economics 的
+    qid 5 与 54）。这类题**不能**为了好看而删除——那属于按内容挑题。正确做法是保留、
+    记录，并在结果分析里说明它对准确率分母的影响。
+    """
+    groups: Dict[Tuple[str, str], List[Mapping[str, Any]]] = {}
+    for item in subset:
+        groups.setdefault((item["subject"], item["question"]), []).append(item)
+    return {key: items for key, items in groups.items() if len(items) > 1}
+
+
 def validate(subset: Sequence[Mapping[str, Any]], pool: Sequence[Mapping[str, Any]], per_subject: int) -> None:
     """子集/池自检；任何一条不通过都直接失败，避免带病数据进仓库。
 
@@ -209,8 +227,11 @@ def validate(subset: Sequence[Mapping[str, Any]], pool: Sequence[Mapping[str, An
     texts_pool = {it["question"] for it in pool}
     if texts_sub & texts_pool:
         raise SystemExit("[自检失败] 少样本池与评测集存在相同题干（疑似泄露）")
-    if len(texts_sub) != len(subset):
-        raise SystemExit("[自检失败] 评测集中存在题干完全相同的题")
+    dup = find_duplicate_groups(subset)
+    if dup:
+        total = sum(len(v) for v in dup.values())
+        print("[警告] 评测集中有 {} 组题干完全重复（共 {} 题）。这是 C-Eval 原始数据特性，"
+              "按规则不剔除，只记录在 manifest 与文档中".format(len(dup), total))
 
     per: Dict[str, int] = {}
     for it in subset:
@@ -238,17 +259,6 @@ def _dump(path: Path, payload: Mapping[str, Any]) -> bytes:
 
 def _md5(data: bytes) -> str:
     return hashlib.md5(data).hexdigest()
-
-
-def _git_commit() -> str:
-    try:
-        out = subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
-            cwd=str(ROOT), capture_output=True, text=True, timeout=10,
-        )
-        return out.stdout.strip() if out.returncode == 0 else "unknown"
-    except Exception:  # noqa: BLE001
-        return "unknown"
 
 
 def main(argv: List[str] | None = None) -> int:
@@ -304,11 +314,20 @@ def main(argv: List[str] | None = None) -> int:
         "n_total": len(subset),
         "n_fewshot": len(pool),
         "subjects": counts,
+        "duplicate_stem_groups": [
+            {
+                "subject": subject,
+                "qids": [int(it["qid"]) for it in items],
+                "answers": [it["answer"] for it in items],
+                "question_head": str(question)[:60],
+            }
+            for (subject, question), items in find_duplicate_groups(subset).items()
+        ],
         "files": {
             SUBSET_FILE: {"md5": _md5(subset_bytes), "bytes": len(subset_bytes), "n_items": len(subset)},
             POOL_FILE: {"md5": _md5(pool_bytes), "bytes": len(pool_bytes), "n_items": len(pool)},
         },
-        "git_commit": _git_commit(),
+        "git_commit": git_revision(ROOT),
         "python": platform.python_version(),
         "note": "md5 可用于核对全组是否使用同一份题目；数据文件本身不含时间戳以保证字节稳定",
     }
