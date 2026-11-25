@@ -1,0 +1,65 @@
+{
+  "generated_at": "2026-11-25T19:37:14+08:00",
+  "dataset": "ceval/ceval-exam",
+  "source": "hf",
+  "seed": 42,
+  "per_subject": 40,
+  "n_total": 200,
+  "n_fewshot": 15,
+  "subjects": {
+    "college_economics": {
+      "val_available": 55,
+      "dev_available": 5,
+      "sampled": 40
+    },
+    "accountant": {
+      "val_available": 49,
+      "dev_available": 5,
+      "sampled": 40
+    },
+    "physician": {
+      "val_available": 49,
+      "dev_available": 5,
+      "sampled": 40
+    },
+    "civil_servant": {
+      "val_available": 47,
+      "dev_available": 5,
+      "sampled": 40
+    },
+    "urban_and_rural_planner": {
+      "val_available": 46,
+      "dev_available": 5,
+      "sampled": 40
+    }
+  },
+  "duplicate_stem_groups": [
+    {
+      "subject": "college_economics",
+      "qids": [
+        5,
+        54
+      ],
+      "answers": [
+        "D",
+        "C"
+      ],
+      "question_head": "兰德只买激光唱片和棒棒糖，他有固定收入，不能借钱，当他沿着预算约束移动时____"
+    }
+  ],
+  "files": {
+    "ceval_subset_200.json": {
+      "md5": "496fefb60ec2610b6ff15115320b823d",
+      "bytes": 102622,
+      "n_items": 200
+    },
+    "ceval_fewshot_pool.json": {
+      "md5": "e7fec2189bf35cd50018ef8e824a85e0",
+      "bytes": 8310,
+      "n_items": 15
+    }
+  },
+  "git_commit": "cafb81b",
+  "python": "3.14.7",
+  "note": "md5 可用于核对全组是否使用同一份题目；数据文件本身不含时间戳以保证字节稳定"
+}

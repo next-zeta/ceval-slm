@@ -1,0 +1,229 @@
+{
+  "meta": {
+    "dataset": "ceval/ceval-exam",
+    "source": "hf",
+    "split": "dev",
+    "seed": 42,
+    "fewshot_per_subject": 3,
+    "subjects": [
+      "college_economics",
+      "accountant",
+      "physician",
+      "civil_servant",
+      "urban_and_rural_planner"
+    ],
+    "note": "示例仅含题干+选项+答案字母，不含解题过程；与评测集零交集"
+  },
+  "items": [
+    {
+      "subject": "accountant",
+      "qid": 0,
+      "question": "甲公司是国内一家上市公司。甲公司对其各子公司实行全面预算管理，并通常使用增量预算方式进行战略控制，子公司预算需要经甲公司预算管理委员会批准后执行。2015年10月，甲公司投资了一个新的项目乙(子公司)。2015年11月，甲公司启动2016年度预算编制工作，此时甲公司应要求乙公司编制____。",
+      "options": {
+        "A": "增量预算",
+        "B": "零基预算",
+        "C": "固定预算",
+        "D": "弹性预算"
+      },
+      "answer": "B",
+      "source_split": "dev",
+      "dev_order": 0
+    },
+    {
+      "subject": "accountant",
+      "qid": 1,
+      "question": "债务人转让全部合同义务的，下列说法不正确的是____。",
+      "options": {
+        "A": "须债权人同意方可进行",
+        "B": "新债务人可主张原债务人对债权人的抗辩",
+        "C": "债务人转移债务的，原债务人对债权人享有债权的，新债务人可以向债权人主张抵销",
+        "D": "非专属于原债务人自身的从债务，一并转让给新债务人"
+      },
+      "answer": "C",
+      "source_split": "dev",
+      "dev_order": 1
+    },
+    {
+      "subject": "accountant",
+      "qid": 2,
+      "question": "某公司2012年以150万元的价格进口了1台仪器；2014年6月因出现故障运往日本修理(出境时已向海关报明)，2014年10月，按海关规定的期限复运进境。此时，该仪器的国际市场价格为200万元。若经海关审定的修理费和料件费为40万元，运费为1.5万元，保险费用为2.8万元，进口关税税率为6%。该仪器复运进境时，应缴纳的进口关税为____万元。",
+      "options": {
+        "A": "9",
+        "B": "3",
+        "C": "2.4",
+        "D": "12"
+      },
+      "answer": "C",
+      "source_split": "dev",
+      "dev_order": 2
+    },
+    {
+      "subject": "civil_servant",
+      "qid": 0,
+      "question": "透过车轮卷起的黄土，却见山野人秋，庄稼割过，静谧中含着一些寂静，只有阳光在切割过的根茬上烁烁闪亮。____。 填入横线上最恰当的是____。",
+      "options": {
+        "A": "这是一段颠簸的行程，一路上景色苍凉雄浑，寂静中裸露着贫瘠",
+        "B": "也许是久旱的缘故，这边的溪流也变成了涓涓细流，在盘踞的石缝间流动",
+        "C": "同绿色的南方相比，这里是荒凉的，乃至荒蛮",
+        "D": "偶见人迹，大都是荒村野店。时而会有一座小小的孤庙一闪而过"
+      },
+      "answer": "D",
+      "source_split": "dev",
+      "dev_order": 0
+    },
+    {
+      "subject": "civil_servant",
+      "qid": 1,
+      "question": "据说，在东南沿海一带，渔民在捕到螃蟹后，将螃蟹放进一个上小肚大的竹篓里面，第一只螃蟹放进去时，渔夫就用重物将口封住，当第二只、第三只放进去后，渔夫就不再盖重物了，因为，第一只即将爬出篓口的螃蟹，会被第二只、第三只螃蟹拉到篓底。如此下去，即使篓口没有盖盖子，但也没有一只蟹能够爬出去。 这个故事意在告诉我们____。",
+      "options": {
+        "A": "人多不一定好办事",
+        "B": "恶性竞争必然导致两败俱伤",
+        "C": "内讧必然内耗，团结就是力量",
+        "D": "与人方便，自己方便"
+      },
+      "answer": "C",
+      "source_split": "dev",
+      "dev_order": 1
+    },
+    {
+      "subject": "civil_servant",
+      "qid": 2,
+      "question": "谨慎：成就____",
+      "options": {
+        "A": "温和：好感",
+        "B": "勤奋：努力",
+        "C": "轻松：普通",
+        "D": "好学：智慧"
+      },
+      "answer": "A",
+      "source_split": "dev",
+      "dev_order": 2
+    },
+    {
+      "subject": "college_economics",
+      "qid": 0,
+      "question": "考虑以下小型开放经济的数据：Y=1000，C=700，G=150，I=250-1000r*。如果世界利率为5%，那么小型开放经济的净出口为____。",
+      "options": {
+        "A": "50",
+        "B": "-50",
+        "C": "150",
+        "D": "-150"
+      },
+      "answer": "B",
+      "source_split": "dev",
+      "dev_order": 0
+    },
+    {
+      "subject": "college_economics",
+      "qid": 1,
+      "question": "已知一垄断企业成本函数为TC=5Q2+20Q+10，产品的需求函数为Q=140-P。利润最大化的产量为____。",
+      "options": {
+        "A": "10",
+        "B": "5",
+        "C": "3",
+        "D": "15"
+      },
+      "answer": "A",
+      "source_split": "dev",
+      "dev_order": 1
+    },
+    {
+      "subject": "college_economics",
+      "qid": 2,
+      "question": "如果消费与实际利率负相关，则______。",
+      "options": {
+        "A": "IS曲线更平坦",
+        "B": "IS曲线更陡峭",
+        "C": "LM曲线更平坦",
+        "D": "LM曲线更陡峭"
+      },
+      "answer": "A",
+      "source_split": "dev",
+      "dev_order": 2
+    },
+    {
+      "subject": "physician",
+      "qid": 0,
+      "question": "医学伦理学的核心问题是____",
+      "options": {
+        "A": "医务人员之间的关系",
+        "B": "医务人员与患者的关系",
+        "C": "医务人员与社会之间的关系",
+        "D": "医务人员与科学发展之间的关系"
+      },
+      "answer": "B",
+      "source_split": "dev",
+      "dev_order": 0
+    },
+    {
+      "subject": "physician",
+      "qid": 1,
+      "question": "下列各心脏病变所产生的杂音可以传导至主动脉瓣关闭不全____",
+      "options": {
+        "A": "颈部和锁骨上窝",
+        "B": "左腋下和肩胛下区",
+        "C": "胸骨左缘和心底部",
+        "D": "胸骨左缘和心尖部"
+      },
+      "answer": "D",
+      "source_split": "dev",
+      "dev_order": 1
+    },
+    {
+      "subject": "physician",
+      "qid": 2,
+      "question": "应激生理反应的神经机制主要通过以下途径调节____",
+      "options": {
+        "A": "交感神经-肾上腺髓质轴",
+        "B": "丘脑下部-垂体前叶-肾上腺皮质轴",
+        "C": "丘脑下部-垂体后叶轴",
+        "D": "丘脑下部-垂体前叶-甲状腺轴"
+      },
+      "answer": "A",
+      "source_split": "dev",
+      "dev_order": 2
+    },
+    {
+      "subject": "urban_and_rural_planner",
+      "qid": 0,
+      "question": "根据自然资源部《关于以“多规合一”为基础推进规划用地“多审合一、多证合一”改革的通知》，建设项目用地预审与选址意见书有效期为____年，自批准之日起计算。",
+      "options": {
+        "A": "1",
+        "B": "2",
+        "C": "3",
+        "D": "5"
+      },
+      "answer": "C",
+      "source_split": "dev",
+      "dev_order": 0
+    },
+    {
+      "subject": "urban_and_rural_planner",
+      "qid": 1,
+      "question": "对于一个完善的城镇体系，下列哪些项的表述是错误的____",
+      "options": {
+        "A": "每个城镇体系相应有一个中心城市",
+        "B": "在城镇体系中，小城镇的数量多于规模大的城市的数量",
+        "C": "城镇体系的城镇空间分布是有序的",
+        "D": "城镇体系的空间范围应与行政区划保持一致"
+      },
+      "answer": "B",
+      "source_split": "dev",
+      "dev_order": 1
+    },
+    {
+      "subject": "urban_and_rural_planner",
+      "qid": 2,
+      "question": "依据《文物保护法》，工程设计方案应当根据____经相应文物行政部门同意后，报城乡建设规划部门批准。",
+      "options": {
+        "A": "文物保护单位的级别",
+        "B": "文物保护区范围",
+        "C": "文物保护规模",
+        "D": "文物保护类别"
+      },
+      "answer": "A",
+      "source_split": "dev",
+      "dev_order": 2
+    }
+  ]
+}
