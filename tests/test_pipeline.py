@@ -24,7 +24,14 @@ SUBJECTS = ["college_economics", "accountant", "physician", "civil_servant", "ur
 
 
 def run(*args) -> subprocess.CompletedProcess:
-    return subprocess.run([PY, *args], cwd=str(REPO), capture_output=True, text=True, encoding="utf-8")
+    # Windows 子进程默认可能用 GBK 输出；与父进程的 UTF-8 解码保持一致。
+    return subprocess.run(
+        [PY, "-X", "utf8", *args],
+        cwd=str(REPO),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
 
 
 def build_fixture(root: Path) -> Path:
