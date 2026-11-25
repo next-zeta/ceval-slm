@@ -278,6 +278,25 @@ docs: 补充交叉复现记录
 
 - 每条正式结果都必须对应一个 commit，并把这个 hash 填进实验总表。
 
+### 9.1 推送到远端（成员 A）
+
+先在 GitHub / Gitee 上建一个**空仓库**（不要勾选自动生成 README），然后：
+
+```powershell
+git remote add origin https://github.com/<你的账号>/ceval-slm.git
+git push -u origin main
+```
+
+推完把仓库地址填回《分工.md》的「Git 仓库地址」，并拉三位队友进来：
+
+```powershell
+# 队友第一次拉取
+git clone https://github.com/<你的账号>/ceval-slm.git
+```
+
+> `logs/` 里是真实运行记录、`data/` 里是 200 道公开题库，都可以公开；模型权重不入库。
+> 若不想公开，把仓库设为私有并添加协作者即可。
+
 ---
 
 ## 10. 复现自检清单
