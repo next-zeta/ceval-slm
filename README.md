@@ -163,14 +163,15 @@ python src/prepare_data.py --source local --raw-dir data/raw/ceval
 
 ## 5. 快速开始
 
-### 5.1 自检（不加载模型，30 秒）
+### 5.1 自检（不加载模型、不联网，30 秒）
 
 ```powershell
-python tests/test_extract.py
-python src/run_eval.py --config configs/base.json --dry-run
+python tests/test_extract.py     # 答案抽取器 18 条边界用例
+python tests/test_pipeline.py    # 用合成数据跑通"抽样 → 自检 → 模板拼接"
+python src/run_eval.py --config configs/base.json --dry-run   # 打印第 1 题完整输入
 ```
 
-第一条验证答案抽取器；第二条打印第 1 题的完整输入，确认模板与数据都正常。
+前两条不需要模型和数据，装完 Python 就能跑，适合在装环境的空档先确认代码没问题。
 
 ### 5.2 5 题试跑（Day 1 必做）
 
