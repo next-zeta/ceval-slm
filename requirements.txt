@@ -1,0 +1,21 @@
+# 运行依赖（Python >= 3.10）
+#
+# 安装顺序建议：
+#   1) CPU 版 torch（体积小、避免误装 CUDA 版）
+#        pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   2) 其余依赖
+#        pip install -r requirements.txt
+#
+# 精确版本以每次实验 summary.json 里记录的 torch / transformers 为准，
+# 这里给的是兼容区间，避免把某个同学的机器锁死在无法安装的版本上。
+
+torch>=2.2,<3
+transformers>=4.45,<5
+tokenizers>=0.20,<1
+safetensors>=0.4
+numpy>=1.24,<3
+huggingface-hub>=0.24,<1
+sentencepiece>=0.2
+
+# 仅 prepare_data.py --source hf 需要（用 --source local 读官方 CSV 时可不装）
+datasets>=2.20,<4

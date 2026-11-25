@@ -1,0 +1,21 @@
+{
+  "exp_id": "exp05_final",
+  "owner": "D",
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "model_revision": null,
+  "template": "fewshot",
+  "fewshot_k": 2,
+  "n_samples": 1,
+  "do_sample": false,
+  "temperature": 0.7,
+  "top_p": 0.9,
+  "max_new_tokens": 16,
+  "batch_size": 4,
+  "seed": 42,
+  "device": "auto",
+  "dtype": "float32",
+  "limit": null,
+  "subset": "data/ceval_subset_200.json",
+  "fewshot_pool": "data/ceval_fewshot_pool.json",
+  "log_dir": "logs"
+}

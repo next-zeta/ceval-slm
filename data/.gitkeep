@@ -1,0 +1,2 @@
+# 占位文件：运行 `python src/prepare_data.py` 后这里会生成题目文件。
+# 生成的 ceval_subset_200.json / ceval_fewshot_pool.json / subset_manifest.json 必须提交。

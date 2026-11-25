@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# 模型权重与本地缓存（不入库：体积大且可重新下载）
+models/
+data/raw/
+data/hf_cache/
+.cache/
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# 编辑器 / 系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/
+
+# 临时产物
+*.tmp
+*.log
+!logs/**/*.jsonl
+
+# 注意：logs/ 下的逐题 JSONL 与 summary 是正式实验证据，必须入库，不要忽略。

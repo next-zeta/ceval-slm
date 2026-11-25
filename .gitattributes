@@ -1,0 +1,8 @@
+# 统一换行符，避免 Windows / macOS 组员之间产生整文件 diff 噪声。
+* text=auto eol=lf
+
+# 逐题日志必须逐字节可比，固定 LF
+*.jsonl text eol=lf
+*.json  text eol=lf
+*.py    text eol=lf
+*.md    text eol=lf
