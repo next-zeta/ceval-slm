@@ -1,0 +1,88 @@
+{
+  "n_samples": 200,
+  "accuracy": 0.315,
+  "correct": 63,
+  "format_valid_rate": 0.895,
+  "truncation_rate": 0.08,
+  "total_elapsed_s": 80.039,
+  "avg_elapsed_s": 0.4002,
+  "avg_elapsed_ms": 400.2,
+  "total_n_calls": 200,
+  "avg_n_calls": 1.0,
+  "avg_output_tokens": 2.5,
+  "per_subject": {
+    "accountant": {
+      "n": 40,
+      "correct": 13,
+      "format_valid": 39,
+      "accuracy": 0.325,
+      "format_valid_rate": 0.975
+    },
+    "civil_servant": {
+      "n": 40,
+      "correct": 10,
+      "format_valid": 29,
+      "accuracy": 0.25,
+      "format_valid_rate": 0.725
+    },
+    "college_economics": {
+      "n": 40,
+      "correct": 11,
+      "format_valid": 34,
+      "accuracy": 0.275,
+      "format_valid_rate": 0.85
+    },
+    "physician": {
+      "n": 40,
+      "correct": 15,
+      "format_valid": 39,
+      "accuracy": 0.375,
+      "format_valid_rate": 0.975
+    },
+    "urban_and_rural_planner": {
+      "n": 40,
+      "correct": 14,
+      "format_valid": 38,
+      "accuracy": 0.35,
+      "format_valid_rate": 0.95
+    }
+  },
+  "exp_id": "exp01_prompt_A",
+  "owner": "A",
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "model_revision": null,
+  "template": "strict_fmt",
+  "template_sha1": "fcdf4330cb8b",
+  "fewshot_k": 0,
+  "generations_per_question": 1,
+  "do_sample": false,
+  "temperature": 0.7,
+  "top_p": 0.9,
+  "max_new_tokens": 16,
+  "batch_size": 1,
+  "seed": 42,
+  "limit": null,
+  "subset": "ceval_subset_200.json",
+  "subset_md5": "496fefb60ec2610b6ff15115320b823d",
+  "subset_subjects": [
+    "college_economics",
+    "accountant",
+    "physician",
+    "civil_servant",
+    "urban_and_rural_planner"
+  ],
+  "git_commit": "19ae396",
+  "config_path": "D:\\school\\SUAT\\class\\人工智能\\大作业\\ceval-slm\\configs\\prompt.json",
+  "note": "成员A；CPU；float32；仅加强输出格式约束",
+  "started_at": "2026-11-26T22:18:02+08:00",
+  "finished_at": "2026-11-26T22:19:23+08:00",
+  "wall_clock_s": 80.441,
+  "env": {
+    "python": "3.14.7",
+    "torch": "2.15.0+cpu",
+    "transformers": "4.57.6",
+    "device": "cpu",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "dtype": "float32"
+  }
+}
