@@ -1,0 +1,88 @@
+{
+  "n_samples": 200,
+  "accuracy": 0.21,
+  "correct": 42,
+  "format_valid_rate": 0.58,
+  "truncation_rate": 0.825,
+  "total_elapsed_s": 905.852,
+  "avg_elapsed_s": 4.5293,
+  "avg_elapsed_ms": 4529.3,
+  "total_n_calls": 600,
+  "avg_n_calls": 3.0,
+  "avg_output_tokens": 37.0,
+  "per_subject": {
+    "accountant": {
+      "n": 40,
+      "correct": 7,
+      "format_valid": 29,
+      "accuracy": 0.175,
+      "format_valid_rate": 0.725
+    },
+    "civil_servant": {
+      "n": 40,
+      "correct": 5,
+      "format_valid": 17,
+      "accuracy": 0.125,
+      "format_valid_rate": 0.425
+    },
+    "college_economics": {
+      "n": 40,
+      "correct": 11,
+      "format_valid": 22,
+      "accuracy": 0.275,
+      "format_valid_rate": 0.55
+    },
+    "physician": {
+      "n": 40,
+      "correct": 9,
+      "format_valid": 21,
+      "accuracy": 0.225,
+      "format_valid_rate": 0.525
+    },
+    "urban_and_rural_planner": {
+      "n": 40,
+      "correct": 10,
+      "format_valid": 27,
+      "accuracy": 0.25,
+      "format_valid_rate": 0.675
+    }
+  },
+  "exp_id": "exp01_base_C",
+  "owner": "C",
+  "model": "models/Qwen2.5-0.5B-Instruct",
+  "model_revision": null,
+  "template": "base",
+  "template_sha1": "ac37ddeb8367",
+  "fewshot_k": 0,
+  "generations_per_question": 3,
+  "do_sample": true,
+  "temperature": 0.7,
+  "top_p": 0.9,
+  "max_new_tokens": 16,
+  "batch_size": 1,
+  "seed": 42,
+  "limit": null,
+  "subset": "ceval_subset_200.json",
+  "subset_md5": "496fefb60ec2610b6ff15115320b823d",
+  "subset_subjects": [
+    "college_economics",
+    "accountant",
+    "physician",
+    "civil_servant",
+    "urban_and_rural_planner"
+  ],
+  "git_commit": "19ae396-dirty",
+  "config_path": "H:\\Files\\C-Eval\\ceval-slm\\configs\\vote.local.json",
+  "note": "成员C:RTX 3060 Laptop GPU",
+  "started_at": "2026-11-27T18:11:35+08:00",
+  "finished_at": "2026-11-27T18:26:43+08:00",
+  "wall_clock_s": 908.491,
+  "env": {
+    "python": "3.10.22",
+    "torch": "2.5.1+cu124",
+    "transformers": "4.57.6",
+    "device": "cuda",
+    "platform": "Windows-10-10.0.26300-SP0",
+    "dtype": "float32"
+  }
+}

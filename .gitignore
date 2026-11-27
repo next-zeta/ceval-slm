@@ -8,7 +8,9 @@ env/
 
 # 模型权重与本地缓存（不入库：体积大且可重新下载）
 models/
+/configs/*.local.json
 data/raw/
+data/ceval/
 data/hf_cache/
 .cache/
 *.safetensors

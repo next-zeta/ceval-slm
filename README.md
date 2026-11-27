@@ -113,13 +113,22 @@ git config --global user.email "你的邮箱"
 ### 3.4 模型下载
 
 ```powershell
-# 国内镜像（推荐）
+# 在仓库根目录运行；模型目录 models/ 已加入 .gitignore
 $env:HF_ENDPOINT = 'https://hf-mirror.com'
-python -c "from huggingface_hub import snapshot_download; snapshot_download('Qwen/Qwen2.5-0.5B-Instruct')"
+python -c "from huggingface_hub import snapshot_download; snapshot_download('Qwen/Qwen2.5-0.5B-Instruct', local_dir='models/Qwen2.5-0.5B-Instruct')"
+
+# 创建本机配置，不要修改被 Git 跟踪的 configs/base.json
+Copy-Item .\configs\base.json .\configs\base.local.json
 ```
 
-模型缓存默认在 `%USERPROFILE%\.cache\huggingface`，**不要**提交进仓库；四人只下载一份互相拷也行
-（把 `HF_HOME` 指到同一个目录即可）。
+然后编辑 `configs/base.local.json`，把 `model` 改为本地模型目录：
+
+```json
+"model": "models/Qwen2.5-0.5B-Instruct"
+```
+
+Windows 路径可以在 JSON 中使用 `/`；若使用反斜杠，必须写成 `\\`。`base.local.json` 已由 `.gitignore` 忽略，
+不会提交到仓库。模型权重目录 `models/` 同样已忽略。
 
 ### 3.5 硬件与时间预算（预估，以 Day 1 实测为准）
 
@@ -171,7 +180,7 @@ python src/prepare_data.py --source local --raw-dir data/raw/ceval
 ```powershell
 python tests/test_extract.py     # 答案抽取器 18 条边界用例
 python tests/test_pipeline.py    # 用合成数据跑通"抽样 → 自检 → 模板拼接"
-python src/run_eval.py --config configs/base.json --dry-run   # 打印第 1 题完整输入
+python src/run_eval.py --config configs/base.local.json --dry-run   # 打印第 1 题完整输入
 ```
 
 前两条不需要模型和数据，装完 Python 就能跑，适合在装环境的空档先确认代码没问题。
@@ -179,7 +188,7 @@ python src/run_eval.py --config configs/base.json --dry-run   # 打印第 1 题�
 ### 5.2 5 题试跑（Day 1 必做）
 
 ```powershell
-python src/run_eval.py --config configs/base.json --limit 5 --exp_id try_base_A
+python src/run_eval.py --config configs/base.local.json --limit 5 --exp_id try_base_A
 ```
 
 看三件事：单题耗时、输出长度、有没有大面积截断。若单题 > 5 s，把 `max_new_tokens` 降到 12
@@ -188,7 +197,7 @@ python src/run_eval.py --config configs/base.json --limit 5 --exp_id try_base_A
 ### 5.3 200 题基线
 
 ```powershell
-python src/run_eval.py --config configs/base.json --exp_id exp00_base_A --note "自己的设备名"
+python src/run_eval.py --config configs/base.local.json --exp_id exp00_base_A --note "自己的设备名"
 ```
 
 `--exp_id` 必须带成员后缀（`_A/_B/_C/_D`），因为**每人的基线只和自己的改进比**。
@@ -199,7 +208,7 @@ python src/run_eval.py --config configs/base.json --exp_id exp00_base_A --note "
 
 | 编号 | 负责人 | 分支 | 唯一变量 | 命令 |
 | :--- | :--- | :--- | :--- | :--- |
-| `exp00_base_*` | 全员 | `main` | 无 | `--config configs/base.json` |
+| `exp00_base_*` | 全员 | `main` | 无 | `--config configs/base.local.json` |
 | `exp01_prompt` | A | `feat/prompt` | 输出契约强度 | `--config configs/prompt.json` |
 | `exp02_fewshot` | B | `feat/fewshot` | 加 2-shot | `--config configs/fewshot.json` |
 | `exp03_voting` | C | `feat/voting` | 3 采样多数投票（600 次调用） | `--config configs/vote.json` |
@@ -208,6 +217,10 @@ python src/run_eval.py --config configs/base.json --exp_id exp00_base_A --note "
 | `exp06_ablation` | D | `feat/final` | 去掉一个模块 | `--config configs/ablation.json` |
 
 `configs/final.json` 目前是占位：Day 2 晚确定组合后再改，改完在 `docs/实验记录总表.md` 里写明组合内容。
+
+基线以外的实验仍须使用各自配置，不能用 `base.local.json` 替代，否则会丢失对应实验变量。若要让这些实验也从本地模型目录加载，
+按需复制对应配置（例如 `configs/prompt.json` → `configs/prompt.local.json`），把副本中的 `model` 改为
+`models/Qwen2.5-0.5B-Instruct`，并用该 `.local.json` 运行。
 
 ---
 
