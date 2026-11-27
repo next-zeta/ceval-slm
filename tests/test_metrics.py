@@ -36,7 +36,16 @@ class SummaryTests(unittest.TestCase):
                 self.assertEqual(summary["accuracy"], 2 / 5)
                 self.assertEqual(summary["generations_per_question"], generations)
                 self.assertEqual(summary["total_n_calls"], 5 * generations)
+                self.assertNotIn("total_generate_api_calls", summary)
                 self.assertIn("base/0/{}/1".format(generations), render([summary]))
+
+    def test_api_calls_count_each_batch_once_even_with_a_short_final_batch(self):
+        rows = [{"subject": "accountant", "n_calls": 3, "batch_index": batch}
+                for batch in (1, 1, 1, 1, 2)]
+        summary = build_summary(rows)
+        self.assertEqual(summary["n_samples"], 5)
+        self.assertEqual(summary["total_n_calls"], 15)
+        self.assertEqual(summary["total_generate_api_calls"], 6)
 
 
 if __name__ == "__main__":
