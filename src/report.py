@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""从逐题日志的 summary.json 反算实验记录总表（Markdown），用于和手工填写表逐格核对。
+"""读取各次运行的 summary.json，生成 Markdown 实验记录表。
 
 用法::
 
@@ -16,10 +16,10 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 HEADER = (
-    "| 实验编号 | 负责人 | Commit | 设备 | 模板 / shots / calls / batch | 调用次数 "
-    "| 准确率 | 格式有效率 | 截断率 | 总耗时(s) | 单题耗时(ms) |"
+    "| 实验编号 | 负责人 | Commit | 设备 | 模板 / shots / 每题生成 / batch | 单题生成总数 "
+    "| generate API 调用数 | 准确率 | 格式有效率 | 截断率 | 总耗时(s) | 分摊每题(ms) |"
 )
-SEP = "| :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |"
+SEP = "| :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"
 
 
 def _fmt_pct(value: Any) -> str:
@@ -59,13 +59,14 @@ def render(rows: List[Dict[str, Any]]) -> str:
             r.get("generations_per_question", 1),
             r.get("batch_size", 1),
         )
-        lines.append("| `{}` | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |".format(
+        lines.append("| `{}` | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |".format(
             r.get("exp_id", "?"),
             r.get("owner") or "-",
             r.get("git_commit", "?"),
             (r.get("env") or {}).get("device", "-"),
             change,
             r.get("total_n_calls", "-"),
+            r.get("total_generate_api_calls", "-"),
             _fmt_pct(r.get("accuracy")),
             _fmt_pct(r.get("format_valid_rate")),
             _fmt_pct(r.get("truncation_rate")),

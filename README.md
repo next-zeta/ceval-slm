@@ -215,11 +215,9 @@ python src/run_eval.py --config configs/base.json --exp_id exp00_base_A --note "
 
 ### 7.1 计时口径（全组统一，别自己改）
 
-> **从进入 `model.generate()` 前一行开始，到它返回后一行结束。**
-> 不含模型加载、题目读取、tokenize、decode 和写日志。
+计时覆盖 `model.generate()`，模型加载、题目读取、tokenize、输入张量传输、decode 和写日志在计时区间之外。CUDA 和 MPS 在计时开始前同步一次，在生成返回后等待设备完成再停止计时。CPU 使用同步执行。
 
-这条写死在 `src/run_eval.py` 里；批量推理时按 `批耗时 / 批内题数` 分摊到每题，并在 JSONL 的
-`batch_size` 字段里留痕。
+批量推理把同一个批次的各次生成耗时相加，再按实际批内题数分摊。JSONL 记录 `batch_index` 和实际 `batch_size`。分摊每题耗时是吞吐口径，尾批按实际题数计算。
 
 ### 7.2 答案抽取（冻结，见 `src/extract.py`）
 
@@ -237,10 +235,11 @@ python src/run_eval.py --config configs/base.json --exp_id exp00_base_A --note "
 | :--- | :--- |
 | `accuracy` | 答对题数 / 全部评测题数（总分母恒为 200，错题不剔除） |
 | `format_valid_rate` | 抽取到唯一选项的题数 / 全部题数 |
-| `truncation_rate` | 达到 `max_new_tokens` 仍未结束的题数 / 全部题数 |
+| `truncation_rate` | 至少一次生成达到 `max_new_tokens` 且未命中模型任一 EOS 的题数 / 全部题数 |
 | `total_elapsed_s` | 逐题耗时之和（只含 generate） |
-| `avg_elapsed_ms` | 总耗时 / 题数 |
-| `n_calls` | 调用次数（投票实验 = 600） |
+| `avg_elapsed_ms` | 总耗时 / 题数，换算为毫秒 |
+| `n_calls` / `total_n_calls` | 每题生成数及其总和，200 题三次投票为 600 |
+| `total_generate_api_calls` | 实际 `generate` 调用数，200 题单次生成且 `batch_size=4` 时为 50 |
 
 ---
 
@@ -249,12 +248,14 @@ python src/run_eval.py --config configs/base.json --exp_id exp00_base_A --note "
 每次运行自动写入：
 
 ```
-logs/<exp_id>/<exp_id>.jsonl   ← 一行一题，含完整输入、原始输出、抽取结果、耗时
+logs/<exp_id>/<exp_id>.jsonl   ← 一行一题，含完整输入、各次生成 token、解析文本和耗时
 logs/<exp_id>/summary.json     ← 汇总 + 环境快照 + commit + 子集 md5
+logs/<exp_id>/failure.json     ← 运行异常时记录阶段、已完成题数和错误信息
 ```
 
-`summary.json` 里有 `git_commit`、`subset_md5`、`env.torch/transformers`，用来证明"这组数字是在这个
-commit、这份题目、这个环境上跑出来的"。
+`summary.json` 记录代码版本、数据指纹、运行时实际精度和 PyTorch 线程数。实验默认模型的空 `model_revision` 会解析到项目约定的版本 `7ae557604adf67be50417f59c2c2f167def9a775`，汇总同时记录模型加载器提供的实际 revision。
+
+旧字段 `raw_output` 继续保存用于解析的文本，去除了特殊 token 和首尾空白。`generations` 逐次记录完整生成 token ID、解析用文本、抽取规则和截断状态，完整 token 序列包含 EOS 以及批处理填充。运行捕获到异常时，已落盘的 JSONL 和 `failure.json` 一起留存，修复后用新实验编号完整重跑。
 
 生成对照表并与手填表逐格核对：
 

@@ -37,7 +37,7 @@ import time
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
 
 try:  # 作为包导入时（python -m src.run_eval）
     from .extract import extract_answer, format_valid
@@ -52,6 +52,7 @@ except ImportError:  # 作为脚本运行时（python src/run_eval.py）
     from provenance import git_revision
 
 ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_MODEL_REVISION = "7ae557604adf67be50417f59c2c2f167def9a775"
 
 DEFAULT_CONFIG: Dict[str, Any] = {
     "exp_id": "exp00_base",
@@ -102,6 +103,9 @@ def load_config(path: Optional[str], overrides: Mapping[str, Any]) -> Dict[str, 
         if value is not None:
             cfg[key] = value
 
+    if cfg["model"] == DEFAULT_CONFIG["model"] and cfg["model_revision"] is None:
+        cfg["model_revision"] = DEFAULT_MODEL_REVISION
+
     if cfg["template"] not in TEMPLATE_NAMES:
         raise SystemExit("[错误] 未知模板 {!r}，可选 {}".format(cfg["template"], TEMPLATE_NAMES))
     if cfg["template"] == "fewshot" and int(cfg["fewshot_k"]) <= 0:
@@ -143,7 +147,7 @@ def torch_dtype(name: str, device: str, torch):
         mapping = {"float32": torch.float32, "float16": torch.float16, "bfloat16": torch.bfloat16}
         return mapping[name]
     if name != "float32":
-        print("[警告] CPU 上使用 {} 通常更慢甚至报错，已回退 float32".format(name))
+        print("[警告] {} 上请求的精度为 {}，本次使用 float32".format(device, name))
     return torch.float32
 
 
@@ -196,6 +200,14 @@ def render_chat(tokenizer, prompt: str) -> str:
     )
 
 
+def synchronize_device(device, torch) -> None:
+    """等待 GPU 完成当前设备上的工作，CPU 推理本身是同步的。"""
+    if device.type == "cuda":
+        torch.cuda.synchronize(device)
+    elif device.type == "mps":
+        torch.mps.synchronize()
+
+
 def generate_samples(model, tokenizer, texts: Sequence[str], cfg: Mapping[str, Any],
                      device, torch) -> Tuple[List[Dict[str, Any]], float]:
     """对一批文本各生成一次；返回 (每行结果, 本批 wall-clock 秒)。"""
@@ -213,24 +225,27 @@ def generate_samples(model, tokenizer, texts: Sequence[str], cfg: Mapping[str, A
     else:
         kwargs.update(do_sample=False)
 
-    t0 = time.perf_counter()
     with torch.inference_mode():
+        synchronize_device(device, torch)
+        t0 = time.perf_counter()
         out = model.generate(**enc, **kwargs)
-    elapsed = time.perf_counter() - t0
+        synchronize_device(device, torch)
+        elapsed = time.perf_counter() - t0
 
-    eos_id = tokenizer.eos_token_id
+    eos = model.generation_config.eos_token_id
+    eos_ids = {eos} if isinstance(eos, int) else set(eos or ())
     rows: List[Dict[str, Any]] = []
     for i in range(int(out.shape[0])):
-        ids = out[i, in_len:].tolist()
-        hit_eos = eos_id in ids
-        if hit_eos:
-            ids = ids[: ids.index(eos_id)]
+        generated_ids = out[i, in_len:].tolist()
+        end = next((index for index, token in enumerate(generated_ids) if token in eos_ids), None)
+        ids = generated_ids[:end]
         text = tokenizer.decode(ids, skip_special_tokens=True).strip()
         rows.append({
-            "text": text,
+            "text_for_parsing": text,
+            "generated_token_ids": generated_ids,
             "output_tokens": len(ids),
             "prompt_tokens": int(prompt_tokens[i]),
-            "truncated": (not hit_eos) and len(ids) >= int(cfg["max_new_tokens"]),
+            "truncated": end is None and len(ids) >= int(cfg["max_new_tokens"]),
         })
     return rows, elapsed
 
@@ -249,14 +264,17 @@ def vote(answers: Sequence[Optional[str]]) -> Optional[str]:
     return first if first in winners else winners[0]
 
 
-def _env_snapshot(torch, transformers, device, cfg) -> Dict[str, Any]:
+def _env_snapshot(torch, transformers, model, device, cfg) -> Dict[str, Any]:
     return {
         "python": platform.python_version(),
         "torch": getattr(torch, "__version__", "unknown"),
         "transformers": getattr(transformers, "__version__", "unknown"),
         "device": str(device),
         "platform": platform.platform(),
-        "dtype": cfg["dtype"],
+        "dtype": str(model.dtype).removeprefix("torch."),
+        "dtype_requested": cfg["dtype"],
+        "torch_num_threads": torch.get_num_threads(),
+        "torch_num_interop_threads": torch.get_num_interop_threads(),
     }
 
 
@@ -278,6 +296,53 @@ def _load_model(cfg: Mapping[str, Any], device, torch):
     model.to(device)
     model.eval()
     return tokenizer, model
+
+
+def evaluate_rows(items, pool, cfg, tokenizer, model, device, torch) -> Iterator[Dict[str, Any]]:
+    """逐题产出日志行，使已完成的批次可随时落盘。"""
+    batch_size = int(cfg["batch_size"])
+    n_samples = int(cfg["n_samples"])
+    for start in range(0, len(items), batch_size):
+        batch = items[start:start + batch_size]
+        prompts = [
+            render_chat(tokenizer, build_prompt(item, cfg["template"],
+                                                shots_for(pool, item["subject"], int(cfg["fewshot_k"]))))
+            for item in batch
+        ]
+        samples = [generate_samples(model, tokenizer, prompts, cfg, device, torch)
+                   for _ in range(n_samples)]
+        elapsed_item = sum(elapsed for _, elapsed in samples) / len(batch)
+
+        for offset, item in enumerate(batch):
+            outs = [outputs[offset] for outputs, _ in samples]
+            parsed = [extract_answer(out["text_for_parsing"]) for out in outs]
+            answers = [answer for answer, _ in parsed]
+            final = answers[0] if n_samples == 1 else vote(answers)
+            gold = str(item["answer"]).strip().upper()
+            yield {
+                "exp_id": str(cfg["exp_id"]),
+                "split": item.get("source_split", "val"),
+                "subject": item["subject"],
+                "qid": int(item["qid"]),
+                "prompt": prompts[offset],
+                "raw_output": "\n===SAMPLE===\n".join(out["text_for_parsing"] for out in outs),
+                "generations": [dict(out, extracted=answer, rule=rule)
+                                for out, (answer, rule) in zip(outs, parsed)],
+                "sample_answers": answers if n_samples > 1 else None,
+                "extracted": final,
+                "rule": parsed[0][1] if n_samples == 1 else None,
+                "gold": gold,
+                "correct": final == gold,
+                "format_valid": bool(format_valid(final)),
+                "truncated": any(out["truncated"] for out in outs),
+                "elapsed_s": round(elapsed_item, 4),
+                "n_calls": n_samples,
+                "prompt_tokens": outs[0]["prompt_tokens"],
+                "output_tokens": sum(out["output_tokens"] for out in outs),
+                "batch_size": len(batch),
+                "batch_index": start // batch_size + 1,
+                "template": cfg["template"],
+            }
 
 
 # --------------------------------------------------------------------------- #
@@ -330,7 +395,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     log_dir = _rel(cfg["log_dir"]) / exp_id
     jsonl_path = log_dir / "{}.jsonl".format(exp_id)
     summary_path = log_dir / "summary.json"
-    if (jsonl_path.exists() or summary_path.exists()) and not args.overwrite:
+    failure_path = log_dir / "failure.json"
+    if any(path.exists() for path in (jsonl_path, summary_path, failure_path)) and not args.overwrite:
         raise SystemExit(
             "[错误] {} 已有日志。换一个 --exp_id，或确认后加 --overwrite（会覆盖旧结果，正式实验不建议）".format(log_dir)
         )
@@ -347,108 +413,89 @@ def main(argv: Optional[List[str]] = None) -> int:
     print("template   : {} | fewshot_k={} | n_samples={}".format(cfg["template"], cfg["fewshot_k"], cfg["n_samples"]))
     print("decoding   : do_sample={} max_new_tokens={} batch_size={}".format(
         bool(cfg["do_sample"]) or int(cfg["n_samples"]) > 1, cfg["max_new_tokens"], cfg["batch_size"]))
-    print("device     : {} | dtype={}".format(device, cfg["dtype"]))
+    print("device     : {} | requested dtype={}".format(device, cfg["dtype"]))
     print("subset     : {} 题（md5 {}）".format(len(items), _file_md5(subset_path)[:12]))
-
-    tokenizer, model = _load_model(cfg, device, torch)
 
     batch_size = int(cfg["batch_size"])
     n_samples = int(cfg["n_samples"])
-    started = datetime.now(timezone.utc).astimezone()
-    t_start = time.perf_counter()
-    git_commit = git_revision()
-
+    git_commit = git_revision(ROOT)
     log_dir.mkdir(parents=True, exist_ok=True)
     records: List[Dict[str, Any]] = []
     n_correct = 0
-
-    with jsonl_path.open("w", encoding="utf-8", newline="\n") as fh:
-        for start in range(0, len(items), batch_size):
-            batch = items[start:start + batch_size]
-            prompts = [
-                render_chat(tokenizer, build_prompt(it, cfg["template"],
-                                                    shots_for(pool, it["subject"], int(cfg["fewshot_k"]))))
-                for it in batch
-            ]
-
-            samples = [generate_samples(model, tokenizer, prompts, cfg, device, torch)
-                       for _ in range(n_samples)]
-
-            for offset, item in enumerate(batch):
-                outs = [samples[s][0][offset] for s in range(n_samples)]
-                elapsed_item = sum(samples[s][1] for s in range(n_samples)) / len(batch)
-                parsed = [extract_answer(o["text"]) for o in outs]
-                answers = [p[0] for p in parsed]
-                final = answers[0] if n_samples == 1 else vote(answers)
-                gold = str(item["answer"]).strip().upper()
-                correct = bool(final == gold)
-                n_correct += int(correct)
-
-                record = {
-                    "exp_id": exp_id,
-                    "split": item.get("source_split", "val"),
-                    "subject": item["subject"],
-                    "qid": int(item["qid"]),
-                    "prompt": prompts[offset],
-                    "raw_output": outs[0]["text"] if n_samples == 1
-                                  else "\n===SAMPLE===\n".join(o["text"] for o in outs),
-                    "sample_answers": answers if n_samples > 1 else None,
-                    "extracted": final,
-                    "rule": parsed[0][1] if n_samples == 1 else None,
-                    "gold": gold,
-                    "correct": correct,
-                    "format_valid": bool(format_valid(final)),
-                    "truncated": any(o["truncated"] for o in outs),
-                    "elapsed_s": round(elapsed_item, 4),
-                    "n_calls": n_samples,
-                    "prompt_tokens": outs[0]["prompt_tokens"],
-                    "output_tokens": sum(o["output_tokens"] for o in outs),
-                    "batch_size": len(batch),
-                    "git_commit": git_commit,
-                    "template": cfg["template"],
-                }
-                records.append(record)
+    log_rows = jsonl_path.open("w" if args.overwrite else "x", encoding="utf-8", newline="\n")
+    stage = "load_model"
+    try:
+        with log_rows as fh:
+            if args.overwrite:
+                summary_path.unlink(missing_ok=True)
+                failure_path.unlink(missing_ok=True)
+            tokenizer, model = _load_model(cfg, device, torch)
+            started = datetime.now(timezone.utc).astimezone()
+            t_start = time.perf_counter()
+            stage = "evaluate"
+            for record in evaluate_rows(items, pool, cfg, tokenizer, model, device, torch):
+                record["git_commit"] = git_commit
                 fh.write(json.dumps(record, ensure_ascii=False) + "\n")
                 fh.flush()
+                records.append(record)
+                n_correct += int(record["correct"])
+                done = len(records)
+                if done == len(items) or (done % batch_size == 0 and done % 20 < batch_size):
+                    spent = time.perf_counter() - t_start
+                    eta = spent / done * (len(items) - done)
+                    print("  [{:>3}/{}] acc={:.3f} 已用 {:.1f}s 预计剩余 {:.1f}s".format(
+                        done, len(items), n_correct / done, spent, eta))
 
-            done = len(records)
-            if done % 20 < batch_size or done == len(items):
-                spent = time.perf_counter() - t_start
-                eta = spent / done * (len(items) - done) if done else 0.0
-                print("  [{:>3}/{}] acc={:.3f} 已用 {:.1f}s 预计剩余 {:.1f}s".format(
-                    done, len(items), n_correct / done, spent, eta))
-
-    finished = datetime.now(timezone.utc).astimezone()
-    env = _env_snapshot(torch, transformers, device, cfg)
-    meta = {
-        "exp_id": exp_id,
-        "owner": cfg.get("owner", ""),
-        "model": cfg["model"],
-        "model_revision": cfg.get("model_revision"),
-        "template": cfg["template"],
-        "template_sha1": template_signature(cfg["template"]),
-        "fewshot_k": int(cfg["fewshot_k"]),
-        "generations_per_question": n_samples,
-        "do_sample": bool(cfg["do_sample"]) or n_samples > 1,
-        "temperature": float(cfg["temperature"]),
-        "top_p": float(cfg["top_p"]),
-        "max_new_tokens": int(cfg["max_new_tokens"]),
-        "batch_size": batch_size,
-        "seed": seed,
-        "limit": args.limit,
-        "subset": subset_path.name,
-        "subset_md5": _file_md5(subset_path),
-        "subset_subjects": subset_meta.get("subjects"),
-        "git_commit": git_commit,
-        "config_path": cfg.get("_config_path"),
-        "note": args.note,
-        "started_at": started.isoformat(timespec="seconds"),
-        "finished_at": finished.isoformat(timespec="seconds"),
-        "wall_clock_s": round(time.perf_counter() - t_start, 3),
-        "env": env,
-    }
-    summary = build_summary(records, meta)
-    write_json(summary_path, summary)
+        stage = "write_summary"
+        finished = datetime.now(timezone.utc).astimezone()
+        meta = {
+            "exp_id": exp_id,
+            "owner": cfg.get("owner", ""),
+            "model": cfg["model"],
+            "model_revision": cfg.get("model_revision"),
+            "model_resolved_revision": getattr(model.config, "_commit_hash", None),
+            "generation_eos_token_id": model.generation_config.eos_token_id,
+            "template": cfg["template"],
+            "template_sha1": template_signature(cfg["template"]),
+            "fewshot_k": int(cfg["fewshot_k"]),
+            "generations_per_question": n_samples,
+            "do_sample": bool(cfg["do_sample"]) or n_samples > 1,
+            "temperature": float(cfg["temperature"]),
+            "top_p": float(cfg["top_p"]),
+            "max_new_tokens": int(cfg["max_new_tokens"]),
+            "batch_size": batch_size,
+            "seed": seed,
+            "limit": args.limit,
+            "subset": subset_path.name,
+            "subset_md5": _file_md5(subset_path),
+            "subset_subjects": subset_meta.get("subjects"),
+            "git_commit": git_commit,
+            "config_path": cfg.get("_config_path"),
+            "note": args.note,
+            "started_at": started.isoformat(timespec="seconds"),
+            "finished_at": finished.isoformat(timespec="seconds"),
+            "wall_clock_s": round(time.perf_counter() - t_start, 3),
+            "env": _env_snapshot(torch, transformers, model, device, cfg),
+        }
+        summary = build_summary(records, meta)
+        write_json(summary_path, summary)
+    except (Exception, KeyboardInterrupt) as error:
+        batch_start = len(records) // batch_size * batch_size
+        failed_batch = items[batch_start:batch_start + batch_size] if stage == "evaluate" else []
+        try:
+            write_json(failure_path, {
+                "exp_id": exp_id,
+                "stage": stage,
+                "completed_questions": len(records),
+                "planned_questions": len(items),
+                "batch": [{"subject": item["subject"], "qid": int(item["qid"])} for item in failed_batch],
+                "git_commit": git_commit,
+                "error_type": type(error).__name__,
+                "error_message": str(error),
+            })
+        except OSError as log_error:
+            print("[警告] 无法保存故障记录: {}".format(log_error), file=sys.stderr)
+        raise
 
     print("=== 结果 ===")
     print("accuracy          : {:.4f} ({}/{})".format(summary["accuracy"], summary["correct"], summary["n_samples"]))

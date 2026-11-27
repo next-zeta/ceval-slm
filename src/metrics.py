@@ -58,6 +58,9 @@ def build_summary(records: Iterable[Mapping[str, Any]], meta: Mapping[str, Any] 
         "avg_output_tokens": round(out_tokens / n, 1) if n else 0.0,
         "per_subject": per_subject,
     }
+    if rows and all("batch_index" in row for row in rows):
+        calls_by_batch = {row["batch_index"]: int(row["n_calls"]) for row in rows}
+        summary["total_generate_api_calls"] = sum(calls_by_batch.values())
     if meta:
         summary.update(dict(meta))
     return summary
@@ -67,9 +70,14 @@ def write_json(path: str | Path, payload: Mapping[str, Any]) -> None:
     """写 UTF-8 JSON（中文不转义，末尾带换行，便于 git diff）。"""
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
-    with p.open("w", encoding="utf-8", newline="\n") as fh:
-        json.dump(payload, fh, ensure_ascii=False, indent=2)
-        fh.write("\n")
+    temporary = p.with_name(p.name + ".tmp")
+    try:
+        with temporary.open("w", encoding="utf-8", newline="\n") as fh:
+            json.dump(payload, fh, ensure_ascii=False, indent=2)
+            fh.write("\n")
+        temporary.replace(p)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def write_jsonl(path: str | Path, rows: Iterable[Mapping[str, Any]]) -> None:
