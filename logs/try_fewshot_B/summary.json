@@ -1,0 +1,60 @@
+{
+  "n_samples": 5,
+  "accuracy": 0.8,
+  "correct": 4,
+  "format_valid_rate": 1.0,
+  "truncation_rate": 0.0,
+  "total_elapsed_s": 6.468,
+  "avg_elapsed_s": 1.2935,
+  "avg_elapsed_ms": 1293.5,
+  "total_n_calls": 5,
+  "avg_n_calls": 1.0,
+  "avg_output_tokens": 3.0,
+  "per_subject": {
+    "accountant": {
+      "n": 5,
+      "correct": 4,
+      "format_valid": 5,
+      "accuracy": 0.8,
+      "format_valid_rate": 1.0
+    }
+  },
+  "exp_id": "try_fewshot_B",
+  "owner": "B",
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "model_revision": null,
+  "template": "fewshot",
+  "template_sha1": "ac37ddeb8367",
+  "fewshot_k": 2,
+  "generations_per_question": 1,
+  "do_sample": false,
+  "temperature": 0.7,
+  "top_p": 0.9,
+  "max_new_tokens": 16,
+  "batch_size": 1,
+  "seed": 42,
+  "limit": 5,
+  "subset": "ceval_subset_200.json",
+  "subset_md5": "496fefb60ec2610b6ff15115320b823d",
+  "subset_subjects": [
+    "college_economics",
+    "accountant",
+    "physician",
+    "civil_servant",
+    "urban_and_rural_planner"
+  ],
+  "git_commit": "25303f0",
+  "config_path": "C:\\Users\\cjr\\Desktop\\人工智能\\ceval-slm\\configs\\fewshot.json",
+  "note": "成员B，Intel Core i5-10400，内存约32 GB，CPU float32，PyTorch intra/inter 6/6，离线快照 7ae557604adf67be50417f59c2c2f167def9a775，与 exp00_base_B 同环境，仅增加每科固定2个 dev 示例",
+  "started_at": "2026-11-27T14:56:56+08:00",
+  "finished_at": "2026-11-27T14:57:03+08:00",
+  "wall_clock_s": 6.578,
+  "env": {
+    "python": "3.14.6",
+    "torch": "2.15.0+cpu",
+    "transformers": "4.57.6",
+    "device": "cpu",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "dtype": "float32"
+  }
+}

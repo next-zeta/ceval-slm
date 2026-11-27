@@ -1,0 +1,88 @@
+{
+  "n_samples": 200,
+  "accuracy": 0.465,
+  "correct": 93,
+  "format_valid_rate": 0.97,
+  "truncation_rate": 0.09,
+  "total_elapsed_s": 330.704,
+  "avg_elapsed_s": 1.6535,
+  "avg_elapsed_ms": 1653.5,
+  "total_n_calls": 200,
+  "avg_n_calls": 1.0,
+  "avg_output_tokens": 4.3,
+  "per_subject": {
+    "accountant": {
+      "n": 40,
+      "correct": 19,
+      "format_valid": 40,
+      "accuracy": 0.475,
+      "format_valid_rate": 1.0
+    },
+    "civil_servant": {
+      "n": 40,
+      "correct": 15,
+      "format_valid": 34,
+      "accuracy": 0.375,
+      "format_valid_rate": 0.85
+    },
+    "college_economics": {
+      "n": 40,
+      "correct": 16,
+      "format_valid": 40,
+      "accuracy": 0.4,
+      "format_valid_rate": 1.0
+    },
+    "physician": {
+      "n": 40,
+      "correct": 20,
+      "format_valid": 40,
+      "accuracy": 0.5,
+      "format_valid_rate": 1.0
+    },
+    "urban_and_rural_planner": {
+      "n": 40,
+      "correct": 23,
+      "format_valid": 40,
+      "accuracy": 0.575,
+      "format_valid_rate": 1.0
+    }
+  },
+  "exp_id": "exp02_fewshot_B",
+  "owner": "B",
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "model_revision": null,
+  "template": "fewshot",
+  "template_sha1": "ac37ddeb8367",
+  "fewshot_k": 2,
+  "generations_per_question": 1,
+  "do_sample": false,
+  "temperature": 0.7,
+  "top_p": 0.9,
+  "max_new_tokens": 16,
+  "batch_size": 1,
+  "seed": 42,
+  "limit": null,
+  "subset": "ceval_subset_200.json",
+  "subset_md5": "496fefb60ec2610b6ff15115320b823d",
+  "subset_subjects": [
+    "college_economics",
+    "accountant",
+    "physician",
+    "civil_servant",
+    "urban_and_rural_planner"
+  ],
+  "git_commit": "25303f0",
+  "config_path": "C:\\Users\\cjr\\Desktop\\人工智能\\ceval-slm\\configs\\fewshot.json",
+  "note": "成员B，Intel Core i5-10400，内存约32 GB，CPU float32，PyTorch intra/inter 6/6，离线快照 7ae557604adf67be50417f59c2c2f167def9a775，与 exp00_base_B 同环境，仅增加每科固定2个 dev 示例",
+  "started_at": "2026-11-27T14:57:22+08:00",
+  "finished_at": "2026-11-27T15:02:53+08:00",
+  "wall_clock_s": 331.282,
+  "env": {
+    "python": "3.14.6",
+    "torch": "2.15.0+cpu",
+    "transformers": "4.57.6",
+    "device": "cpu",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "dtype": "float32"
+  }
+}
