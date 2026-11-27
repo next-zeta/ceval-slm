@@ -9,7 +9,7 @@
 - ``strict_fmt_role`` 可选第三段（§4.2 加分项）：在 strict_fmt 上再加一句角色设定；
 - ``fewshot``        成员 B 的改进（§4.3）：拼入 dev 集示例，示例数量由调用方给定。
 
-题目块、选项块、结尾 "答案：" 四者保持一致，保证换模板时只有头部指令在变。
+所有模板共用待测题、选项和结尾。fewshot 沿用 base 的头部，只插入 dev 示例。
 """
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ STRICT_FMT_HEADER = (
 
 STRICT_FMT_ROLE_HEADER = "你是一名严谨的中文学科专家。\n\n" + STRICT_FMT_HEADER
 
-FEWSHOT_HEADER = "你是参加中文考试的考生。请根据示例作答，只输出一个选项字母（A、B、C 或 D）。"
+FEWSHOT_HEADER = BASE_HEADER
 
 #: 模板头部文本，用于在日志/汇总里做"同一模板"校验
 HEADERS: Dict[str, str] = {
@@ -94,7 +94,7 @@ def build_prompt(
 
 
 def template_signature(template: str) -> str:
-    """模板指纹：用于在汇总里确认"两组结果用的是同一套提示词"。"""
+    """返回头部指令的指纹，示例数量和内容由配置与数据记录。"""
     return hashlib.sha1(HEADERS[template].encode("utf-8")).hexdigest()[:12]
 
 
